@@ -39,7 +39,7 @@ public class SecurityConfiguration {
                 .sessionCreationPolicy(SessionCreationPolicy.STATELESS)
                 .and()
                 .authorizeHttpRequests()
-                .antMatchers(HttpMethod.POST, "/user/")
+                .antMatchers(HttpMethod.POST, "/user")
                 .hasRole("ADMIN")
                 .antMatchers("/user/*")
                 .hasRole("USER")
