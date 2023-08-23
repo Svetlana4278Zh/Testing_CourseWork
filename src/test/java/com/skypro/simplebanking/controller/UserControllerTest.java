@@ -11,6 +11,7 @@ import lombok.SneakyThrows;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.http.MediaType;
@@ -49,15 +50,21 @@ public class UserControllerTest {
 
     @SneakyThrows
     @Test
-    void createUserWhenRoleIsAdminTest(){
-        authenticationUp(true);
+    void createUserWhenRoleIsAdminTest(@Value("${app.security.admin-token}") String token){
+
         CreateUserRequest userRequestTest = getUserRequest();
+        String username = userRequestTest.getUsername();
+
         String jsonUser = objectMapper.writeValueAsString(userRequestTest);;
 
         mockMvc.perform(post("/user")
-                    .contentType(MediaType.APPLICATION_JSON)
-                    .content(jsonUser))
-                .andExpect(status().isOk());
+                        .header("X-SECURITY-ADMIN-KEY", token)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(jsonUser))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.id").isNumber())
+                .andExpect(jsonPath("$.username").value(username))
+                .andExpect(jsonPath("$.accounts").isNotEmpty());
     }
 
     @SneakyThrows
@@ -87,8 +94,10 @@ public class UserControllerTest {
                 .andExpect(jsonPath("$.length()").value(2))
                 .andExpect(jsonPath("$[0].username").value(userTest1.getUsername()))
                 .andExpect(jsonPath("$[0].id").value(userTest1.getId()))
+                .andExpect(jsonPath("$[0].accounts").isNotEmpty())
                 .andExpect(jsonPath("$[1].username").value(userTest2.getUsername()))
-                .andExpect(jsonPath("$[1].id").value(userTest2.getId()));
+                .andExpect(jsonPath("$[1].id").value(userTest2.getId()))
+                .andExpect(jsonPath("$[1].accounts").isNotEmpty());
     }
 
     @SneakyThrows
@@ -112,7 +121,8 @@ public class UserControllerTest {
                 .andExpect(jsonPath("$.id").isNotEmpty())
                 .andExpect(jsonPath("$.id").value(userTest.getId()))
                 .andExpect(jsonPath("$.username").isNotEmpty())
-                .andExpect(jsonPath("$.username").value(userTest.getUsername()));
+                .andExpect(jsonPath("$.username").value(userTest.getUsername()))
+                .andExpect(jsonPath("$.accounts").isNotEmpty());
     }
 
     @SneakyThrows
